@@ -1,40 +1,38 @@
 package metrics
 
 import (
-    "github.com/gofiber/fiber/v2"
-    "github.com/prometheus/client_golang/prometheus"
-    "github.com/prometheus/client_golang/prometheus/promhttp"
-    "net/http"
+	"github.com/gofiber/fiber/v2"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/valyala/fasthttp/fasthttpadaptor"
 )
 
+// Registrar métricas Prometheus
 var (
-    reqsCounter = prometheus.NewCounterVec(
-        prometheus.CounterOpts{
-            Name: "http_requests_total",
-            Help: "Número total de requisições",
-        },
-        []string{"path"},
-    )
-    latencyHistogram = prometheus.NewHistogramVec(
-        prometheus.HistogramOpts{
-            Name: "http_request_duration_seconds",
-            Help: "Duração das requisições HTTP",
-        },
-        []string{"path"},
-    )
+	requestsTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "http_requests_total",
+			Help: "Total number of HTTP requests",
+		},
+		[]string{"method", "route"},
+	)
+	latencyHistogram = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "http_request_duration_seconds",
+			Help:    "Histogram of HTTP request durations",
+			Buckets: prometheus.DefBuckets,
+		},
+		[]string{"method", "route"},
+	)
 )
 
 func SetupPrometheus(app *fiber.App) {
-    prometheus.MustRegister(reqsCounter, latencyHistogram)
+	prometheus.MustRegister(requestsTotal)
+	prometheus.MustRegister(latencyHistogram)
 
-    app.Use(func(c *fiber.Ctx) error {
-        timer := prometheus.NewTimer(latencyHistogram.WithLabelValues(c.Path()))
-        defer timer.ObserveDuration()
-
-        err := c.Next()
-        reqsCounter.WithLabelValues(c.Path()).Inc()
-        return err
-    })
-
-    app.Get("/metrics", fiber.WrapH(promhttp.Handler()))
+	// Usar fasthttpadaptor para adaptar o handler
+	app.Get("/metrics", func(c *fiber.Ctx) error {
+		fasthttpadaptor.NewFastHTTPHandler(promhttp.Handler())(c.Context())
+		return nil
+	})
 }

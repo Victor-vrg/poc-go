@@ -10,10 +10,10 @@ import (
 func SetupRoutes(app *fiber.App, db *gorm.DB) {
 	// Grupo de rotas de autenticação
 	auth := app.Group("/auth")
-	auth.Post("/register", func(c *fiber.Ctx) error { return controllers.Register(c) })
-	auth.Post("/login", func(c *fiber.Ctx) error { return controllers.Login(c) })
+	auth.Post("/register", controllers.Register)
+	auth.Post("/login", controllers.Login)
 
 	// Rota protegida com middleware de autenticação
-	protected := app.Group("/user", middleware.JWTAuthMiddleware)
+	protected := app.Group("/user", middleware.AuthMiddleware)
 	protected.Get("/me", func(c *fiber.Ctx) error { return controllers.GetProfile(c, db) })
 }
