@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 
@@ -19,11 +20,18 @@ import (
 func main() {
 	// Carrega variáveis de ambiente
 	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found")
+		log.Println("No .env file found, loading from system env")
 	}
 
-	// Configura a conexão com o banco de dados
+	// Usa a variável DATABASE_URL se estiver configurada, caso contrário usa os parâmetros separados
 	dsn := os.Getenv("DATABASE_URL")
+	if dsn == "" {
+		dsn = fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+			os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_USER"),
+			os.Getenv("DB_PASSWORD"), os.Getenv("DB_NAME"))
+	}
+
+	// Conecta ao banco de dados
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatal("Failed to connect to database: ", err)
