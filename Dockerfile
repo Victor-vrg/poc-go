@@ -1,32 +1,32 @@
 # Etapa de build
-FROM golang:1.18-alpine AS builder
+FROM golang:1.20-alpine AS builder
 
-# Define o diretório de trabalho
+# Definir o diretório de trabalho no container
 WORKDIR /app
 
-# Copia os arquivos de dependência
-COPY go.mod ./
-COPY go.sum ./
+# Copiar os arquivos go.mod e go.sum primeiro, para aproveitar o cache de dependências
+COPY go.mod go.sum ./
 
-# Baixa as dependências
+# Baixar as dependências
 RUN go mod download
 
-# Copia o restante do código para o container
+# Copiar o restante dos arquivos do projeto
 COPY . .
 
-# Verifica o conteúdo do diretório
-RUN ls -la /app
+# Compilar o binário a partir do arquivo main.go localizado em cmd/
+RUN go build -o /app/main ./cmd/main.go
 
-# Compila a aplicação
-RUN go build -o /app/main .
-
-# Etapa final: cria uma imagem leve para rodar o binário
+# Etapa final: criar uma imagem mais leve
 FROM alpine:latest
 
-WORKDIR /root/
+# Definir o diretório de trabalho na nova imagem
+WORKDIR /app
 
-# Copia o binário compilado da etapa anterior
+# Copiar o binário da etapa de build
 COPY --from=builder /app/main .
 
-# Define o comando padrão ao iniciar o container
-CMD ["./main"]
+# Expor a porta da aplicação (ajuste conforme necessário)
+EXPOSE 8080
+
+# Comando de inicialização
+CMD ["/app/main"]
