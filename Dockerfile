@@ -14,6 +14,9 @@ RUN go mod download
 # Copia o restante do código para o container
 COPY . .
 
+# Verifica o conteúdo do diretório
+RUN ls -la /app
+
 # Compila a aplicação
 RUN go build -o /app/main .
 

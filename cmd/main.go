@@ -11,7 +11,6 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
-	"github.com/Victor-vrg/poc-go/config"
 	"github.com/Victor-vrg/poc-go/metrics"
 	"github.com/Victor-vrg/poc-go/models"
 	"github.com/Victor-vrg/poc-go/routes"
